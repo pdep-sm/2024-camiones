@@ -1,0 +1,60 @@
+import camiones.*
+import deposito.*
+
+describe "Tests de Camiones" {
+  const optimus = new Camion(cargaMaxima = 1000)
+  const bulto = new Bulto(pesoPallet = 70, 
+                          caja = new Caja(peso = 12, elemento="ketchup"),
+                          cantidadCajas = 50)
+  const caja = new Caja(peso = 10, elemento="ketchup")
+  const bidon = new Bidon(litros = 200, liquido = new Liquido(densidad=0.8, nombre="aceite"))
+  const ultraMagnus = new Camion(cargaMaxima = 1000)
+  const cybertron = new Deposito(camiones = #{optimus, ultraMagnus})
+
+  method initialize() {
+    optimus.cargar(bulto)
+    optimus.cargar(caja)
+    optimus.cargar(bidon)
+
+    ultraMagnus.cargar(bulto)
+    ultraMagnus.cargar(caja)
+    ultraMagnus.cargar(caja)
+    ultraMagnus.cargar(caja)
+    ultraMagnus.cargar(caja)
+  }
+
+  test "Test carga total de Camion como viene del enunciado" {
+    assert.equals(840, optimus.cargaActual())
+  }
+
+  test "Camion puede cargar una caja de 160kg" {
+    assert.that(optimus.puedeAceptar( new Caja(peso = 160, elemento="ketchup") ))
+  }
+
+  test "Camion NO puede cargar una caja de 161kg" {
+    assert.notThat(optimus.puedeAceptar( new Caja(peso = 161, elemento="ketchup") ))
+  }
+
+  test "Ultra Magnus solo lleva un elemento y es KETCHUP" {
+    assert.equals(#{"ketchup"}, ultraMagnus.elementosCargados())
+  }
+
+  test "Deposito Cybertron con Optimus y Ultra Magnus, ambos llevan ketchup" {
+    assert.equals(#{optimus, ultraMagnus},
+      cybertron.camionesCargando("ketchup"))
+  }
+
+  test "Deposito Cybertron solo Optimus lleva aceite" {
+    assert.equals(#{optimus},
+      cybertron.camionesCargando("aceite"))
+  }
+
+  test "Elemento comun entre Optimus y su hermano Ultra Magnus es Ketchup" {
+    assert.equals(#{"ketchup"}, ultraMagnus.elementosCompartidos(optimus))
+  }
+
+  test "El coso más liviano de Optimus es la caja de 10kg" {
+    assert.equals(caja, optimus.cosoMasLiviano())
+  }
+
+}
