@@ -1,5 +1,7 @@
 import camiones.*
 import deposito.*
+import cosos.*
+import errores.*
 
 describe "Tests de Camiones" {
   const optimus = new Camion(cargaMaxima = 1000)
@@ -56,5 +58,20 @@ describe "Tests de Camiones" {
   test "El coso más liviano de Optimus es la caja de 10kg" {
     assert.equals(caja, optimus.cosoMasLiviano())
   }
+
+}
+
+describe "Estados de Camión" {
+  const optimus = new Camion(cargaMaxima = 1000)
+  test "Optimus, da error al salir de reparación, estando disponible" {
+    assert.throwsExceptionLike(
+      new NoEstaEnReparacionException(message = "Estado incorrecto!"), 
+      { optimus.salirDeReparacion() } )
+  }
+
+  test "Optimus entra en reparación sin lanzar error, estando disponible" {
+    assert.doesNotThrowException({ optimus.entrarEnReparacion() })
+  }
+
 
 }

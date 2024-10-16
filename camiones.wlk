@@ -1,24 +1,51 @@
+import cosos.*
+import errores.*
 class Camion {
   const carga = []
   const cargaMaxima
+  var property estado = disponibleParaCarga
 
   /** pto 1 y 3 */
   method cargar(coso) {
-    if (self.puedeAceptar(coso)) 
-      carga.add(coso)
+    if (not self.puedeAceptar(coso)) 
+      throw new NoSePuedeCargarException(message = "Error al cargar un coso")
+      //Fail Fast
+    
+    carga.add(coso)
   }
 
   /** pto 2 */
-  method puedeAceptar(coso) = //TODO chequear disponible para carga
+  method puedeAceptar(coso) = estado.puedeAceptar(coso, self)
+
+  method puedeAceptarPeso(coso) = 
     (coso.peso() + self.cargaActual()) <= cargaMaxima
-  
+
   method cargaActual() = carga.sum{ coso => coso.peso() }
 
-  //TODO pto 4
+  /** pto 4.a */
+  method salirDeReparacion() {
+    estado.salirDeReparacion(self)
+  }
+
+  /** pto 4.b */
+  method entrarEnReparacion() {
+    estado.entrarEnReparacion(self)
+  }
+
+  /** pto 4.c */
+  method salirDeViaje() {
+    estado.salirDeViaje(self)
+  }
+
+  /** pto 4.d */
+  method volverDeViaje() {
+    estado.volverDeViaje(self)
+  }
 
   /** pto 5 */
-  method puedePartir() = //TODO disponible para carga
-    self.cargaActual() >= cargaMaxima * 0.75
+  method puedePartir() = estado.puedePartir(self)
+
+  method completoParaPartir() = self.cargaActual() >= cargaMaxima * 0.75
   
   //TODO pto 6
 
@@ -38,40 +65,59 @@ class Camion {
                             cosoComparador.masLivianoEntre(liviano, coso) })
                             //carga.min{ coso => coso.peso() }
 
-method laskdlkas() = collection.list()
 }
 
-object cosoComparador {
-  method masLivianoEntre(coso, otroCoso) = if (coso.peso() < otroCoso.peso()) coso else otroCoso
+class Estado {
+  method puedeAceptar(coso, camion) = false
+
+  method salirDeReparacion(camion) {
+     throw new NoEstaEnReparacionException(message = "Estado incorrecto!")
+  }
+
+  method entrarEnReparacion(camion) {
+    camion.estado(enReparacion)
+  }
+
+  method salirDeViaje(camion) {
+    camion.estado(enViaje)
+  }
+
+  method volverDeViaje(camion) {
+    throw new NoEstaEnViajeException(message = "Estado incorrecto!")
+  }
+
+  method puedePartir(camion) = false
+
 }
 
-class Caja {
-  const property peso
-  const property elemento
-  
-}
+object disponibleParaCarga inherits Estado {
 
-class Bulto {
-  const pesoPallet
-  const caja
-  const cantidadCajas
+  override method puedeAceptar(coso, camion) = camion.puedeAceptarPeso(coso)
 
-  method peso() = caja.peso() * cantidadCajas + pesoPallet
-
-  method elemento() = caja.elemento()
+  override method puedePartir(camion) = camion.completoParaPartir()
 
 }
 
-class Bidon {
-  const litros
-  const liquido
+object enReparacion inherits Estado {
 
-  method peso() = litros * liquido.densidad()
+  override method salirDeReparacion(camion) {
+    camion.estado(disponibleParaCarga)
+  }
 
-  method elemento() = liquido.nombre()
+  override method entrarEnReparacion(camion) {
+    throw new YaEstaEnReparacionException(message="El camion ya esta en reparación!")
+  }
+
 }
 
-class Liquido {
-  const property densidad
-  const property nombre
+object enViaje inherits Estado {
+
+  override method salirDeViaje(camion) {
+    throw new YaEstaEnViajeException(message="El camion ya está de viaje!")
+  }
+
+  override method volverDeViaje(camion) {
+    camion.estado(disponibleParaCarga)
+  }
+
 }
